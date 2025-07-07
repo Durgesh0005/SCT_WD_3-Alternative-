@@ -1,0 +1,197 @@
+<<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Quiz Game</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 30px;
+      background: #f4f4f4;
+    }
+    h1 {
+      text-align: center;
+    }
+    .quiz-container {
+      max-width: 700px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px #ccc;
+    }
+    .question {
+      margin-bottom: 15px;
+      font-size: 18px;
+    }
+    .options {
+      margin-bottom: 20px;
+    }
+    .options label {
+      display: block;
+      margin-bottom: 8px;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 8px;
+    }
+    button {
+      padding: 10px 20px;
+      background: #333;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    #score {
+      font-size: 20px;
+      text-align: center;
+      margin-top: 20px;
+    }
+    .review {
+      background: #ffecec;
+      border-left: 5px solid red;
+      padding: 10px;
+      margin-top: 15px;
+    }
+    .correct {
+      color: green;
+      font-weight: bold;
+    }
+    .user-wrong {
+      color: red;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Interactive Quiz Game</h1>
+<div class="quiz-container">
+  <div id="quiz"></div>
+  <button id="nextBtn">Next</button>
+  <div id="score"></div>
+</div>
+
+<script>
+  const quizData = [
+    { type: "single", question: "What is the capital of France?", options: ["Berlin", "Madrid", "Paris", "Rome"], answer: "Paris" },
+    { type: "multi", question: "Select fruits from the list.", options: ["Carrot", "Apple", "Banana", "Potato"], answer: ["Apple", "Banana"] },
+    { type: "text", question: "HTML stands for ______.", answer: "HyperText Markup Language" },
+    { type: "single", question: "Which planet is known as the Red Planet?", options: ["Earth", "Mars", "Venus", "Jupiter"], answer: "Mars" }
+    // Add more questions if needed
+  ];
+
+  let currentQuestion = 0;
+  let score = 0;
+  let userAnswers = [];
+
+  const quizContainer = document.getElementById("quiz");
+  const nextBtn = document.getElementById("nextBtn");
+  const scoreContainer = document.getElementById("score");
+
+  function loadQuestion() {
+    const q = quizData[currentQuestion];
+    quizContainer.innerHTML = `<div class="question">${currentQuestion + 1}. ${q.question}</div>`;
+
+    if (q.type === "single") {
+      const options = q.options.map(opt => `
+        <label><input type="radio" name="option" value="${opt}"> ${opt}</label>
+      `).join("");
+      quizContainer.innerHTML += `<div class="options">${options}</div>`;
+    }
+
+    if (q.type === "multi") {
+      const options = q.options.map(opt => `
+        <label><input type="checkbox" name="option" value="${opt}"> ${opt}</label>
+      `).join("");
+      quizContainer.innerHTML += `<div class="options">${options}</div>`;
+    }
+
+    if (q.type === "text") {
+      quizContainer.innerHTML += `<input type="text" id="textAnswer" placeholder="Type your answer here">`;
+    }
+  }
+
+  function checkAnswer() {
+    const q = quizData[currentQuestion];
+    let isCorrect = false;
+    let userResponse;
+
+    if (q.type === "single") {
+      const selected = document.querySelector('input[name="option"]:checked');
+      userResponse = selected ? selected.value : "";
+      if (userResponse === q.answer) {
+        score++;
+        isCorrect = true;
+      }
+    }
+
+    if (q.type === "multi") {
+      const selectedOptions = Array.from(document.querySelectorAll('input[name="option"]:checked')).map(opt => opt.value);
+      userResponse = selectedOptions;
+      if (JSON.stringify(selectedOptions.sort()) === JSON.stringify(q.answer.sort())) {
+        score++;
+        isCorrect = true;
+      }
+    }
+
+    if (q.type === "text") {
+      const userInput = document.getElementById("textAnswer").value.trim();
+      userResponse = userInput;
+      if (userInput.toLowerCase() === q.answer.toLowerCase()) {
+        score++;
+        isCorrect = true;
+      }
+    }
+
+    userAnswers.push({
+      question: q.question,
+      type: q.type,
+      correctAnswer: q.answer,
+      userAnswer: userResponse,
+      correct: isCorrect
+    });
+  }
+
+  function showResults() {
+    quizContainer.innerHTML = "";
+    nextBtn.style.display = "none";
+    scoreContainer.innerHTML = `🎉 You scored <strong>${score}</strong> out of <strong>${quizData.length}</strong><br/><br/>`;
+
+    userAnswers.forEach((ans, i) => {
+      if (!ans.correct) {
+        let userAns = Array.isArray(ans.userAnswer) ? ans.userAnswer.join(", ") : ans.userAnswer;
+        let correctAns = Array.isArray(ans.correctAnswer) ? ans.correctAnswer.join(", ") : ans.correctAnswer;
+
+        const review = `
+          <div class="review">
+            <strong>Q${i + 1}:</strong> ${ans.question}<br/>
+            <span class="user-wrong">Your Answer:</span> ${userAns || 'No Answer'}<br/>
+            <span class="correct">Correct Answer:</span> ${correctAns}
+          </div>
+        `;
+        quizContainer.innerHTML += review;
+      }
+    });
+
+    if (score === quizData.length) {
+      quizContainer.innerHTML += `<p style="color:green;text-align:center;font-weight:bold;">Excellent! All answers are correct! 🎯</p>`;
+    }
+  }
+
+  nextBtn.addEventListener("click", () => {
+    checkAnswer();
+    currentQuestion++;
+    if (currentQuestion < quizData.length) {
+      loadQuestion();
+    } else {
+      showResults();
+    }
+  });
+
+  loadQuestion();
+</script>
+
+</body>
+</html>
+
